@@ -2,6 +2,7 @@
 using DaveTheMonitor.TMMods.CSR.CSRScript.Generators;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace DaveTheMonitor.TMMods.CSR.CSRScript
 {
@@ -13,15 +14,15 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         private ScriptVar[] _locals;
         private int _stackSize;
         private int _localSize;
-        internal IScriptContext _context;
+        private IScriptContext _context;
         private List<ScriptVar> _invokeCache;
-        private HashSet<int> _localIndexes;
         private MainWindow _window;
         private bool _errored;
+        private Stopwatch _stopwatch;
 
-        public void Error(string header, string message)
+        public void Error(ScriptError error)
         {
-            _window.LogError(header, message);
+            _window.LogError(error.Header, error.Message);
             _errored = true;
         }
 
@@ -33,8 +34,10 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
             }
         }
 
-        public void Run(Script script, Action<IScriptRuntime> init)
+        public void Run(Script script, Action<IScriptRuntime> init, int timeout)
         {
+            _window.Log("Script executing...");
+            _stopwatch.Restart();
             _errored = false;
             CurrentScript = script;
             init?.Invoke(this);
@@ -42,6 +45,12 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
             {
                 if (_errored)
                 {
+                    Exit();
+                    break;
+                }
+                else if (timeout > 0 && _stopwatch.ElapsedMilliseconds > timeout)
+                {
+                    Error(new ScriptError("Script Timeout", $"Script execution timed out ({timeout} ms)"));
                     Exit();
                     break;
                 }
@@ -302,7 +311,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
                         bool isStatic = op.Op == ScriptOpCode.InvokeStatic || op.Op == ScriptOpCode.InvokeStaticRet;
                         if (!isStatic && _context == null)
                         {
-                            Error("Null Context", "Context is null in invoke.");
+                            Error(new ScriptError("Null Context", "Context is null in invoke."));
                             break;
                         }
                         string name = op.GetArgString(0);
@@ -341,7 +350,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
                     {
                         if (_context == null)
                         {
-                            Error("Null Context", "Context is null in property access.");
+                            Error(new ScriptError("Null Context", "Context is null in property access."));
                             break;
                         }
                         string name = op.GetArgString(0);
@@ -350,12 +359,14 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
                     }
                     default:
                     {
-                        Error("Undefined Operation", "Undefined Operation");
+                        Error(ScriptError.UndefinedOperation());
                         break;
                     }
                 }
                 _position++;
             }
+            _stopwatch.Stop();
+            _window.Log("Script execution finished in " + _stopwatch.ElapsedMilliseconds + " ms");
             Exit();
         }
 
@@ -364,11 +375,6 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
             _position = 0;
             CurrentScript = null;
             _stack.Clear();
-            foreach (int index in _localIndexes)
-            {
-                _locals[index] = ScriptVar.Null;
-            }
-            _localIndexes.Clear();
         }
 
 
@@ -376,7 +382,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         {
             if (_stack.Count >= _stackSize)
             {
-                Error("Stack Overflow", "Maximum stack size exceeded.");
+                Error(ScriptError.StackOverflowError(_stackSize));
                 return;
             }
             _stack.Push(value);
@@ -396,11 +402,10 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         {
             if (index > _localSize)
             {
-                Error("Maximum Local Size Exceeded", "Exceeded maximum local variable size. Delete unneeded variables with the delete command.");
+                Error(ScriptError.MaxLocalsError(_localSize));
                 return;
             }
             _locals[index] = value;
-            _localIndexes.Add(index);
         }
 
         private void DeleteVar(int index)
@@ -409,7 +414,6 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
             {
                 _locals[index] = ScriptVar.Null;
             }
-            _localIndexes.Remove(index);
         }
 
         public ScriptVar Invoke(string name, IList<ScriptVar> args)
@@ -423,23 +427,404 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
             {
                 case "createarray":
                 {
-                    return new ScriptVar(new List<ScriptVar>().CreateScriptArray(false));
+                    if (args.Count == 0)
+                    {
+                        return new ScriptVar(new List<ScriptVar>().CreateScriptArray(false));
+                    }
+                    else if (args.Count == 1)
+                    {
+                        return new ScriptVar(new List<ScriptVar>(GetInt(args[0])).CreateScriptArray(false));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(1, args.Count, name);
+                    }
+                    break;
                 }
                 case "getlength":
                 {
-                    ScriptVar arg = args[0];
-                    if (arg.IsString)
+                    if (args.Count == 1)
                     {
-                        return new ScriptVar(arg.GetStringValue(this).Length);
+                        ScriptVar arg = args[0];
+                        if (arg.IsString)
+                        {
+                            return new ScriptVar(arg.GetStringValue(this).Length);
+                        }
+                        else if (arg.IsContext && GetContext(arg) is IScriptArray arr)
+                        {
+                            return new ScriptVar(arr.Count);
+                        }
                     }
-                    else if (arg.IsContext && arg.GetContextValue(this) is IScriptArray arr)
+                    else
                     {
-                        return new ScriptVar(arr.Count);
+                        InvalidArgCountError(1, args.Count, name);
+                    }
+                    break;
+                }
+                case "random":
+                {
+                    if (args.Count == 0)
+                    {
+                        return new ScriptVar(new ScriptRandom(new Random().Next()));
+                    }
+                    else if (args.Count == 1)
+                    {
+                        return new ScriptVar(new ScriptRandom(GetInt(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(1, args.Count, name);
+                    }
+                    break;
+                }
+                case "abs":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Abs(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "acos":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Acos(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "acosh":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Acosh(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "asin":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Asin(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "asinh":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Asinh(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "atan":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Atan(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "atan2":
+                {
+                    if (args.Count == 2)
+                    {
+                        return new ScriptVar((float)Math.Atan2(GetFloat(args[0]), GetFloat(args[1])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "atanh":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Atanh(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "ceil":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Ceiling(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "clamp":
+                {
+                    if (args.Count == 3)
+                    {
+                        return new ScriptVar((float)Math.Clamp(GetFloat(args[0]), GetFloat(args[1]), GetFloat(args[2])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "cos":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Cos(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "cosh":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Cosh(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "deg":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)(args[0].GetFloatValue(this) * (180 / Math.PI)));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(1, args.Count, name);
+                    }
+                    break;
+                }
+                case "exp":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Exp(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "floor":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Floor(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "log":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Log(GetFloat(args[0])));
+                    }
+                    else if (args.Count == 2)
+                    {
+                        return new ScriptVar((float)Math.Log(GetFloat(args[0]), GetFloat(args[1])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "log10":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Log10(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "max":
+                {
+                    if (args.Count == 2)
+                    {
+                        return new ScriptVar((float)Math.Max(GetFloat(args[0]), GetFloat(args[1])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(2, args.Count, name);
+                    }
+                    break;
+                }
+                case "min":
+                {
+                    if (args.Count == 2)
+                    {
+                        return new ScriptVar((float)Math.Min(GetFloat(args[0]), GetFloat(args[1])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(2, args.Count, name);
+                    }
+                    break;
+                }
+                case "pow":
+                {
+                    if (args.Count == 2)
+                    {
+                        return new ScriptVar((float)Math.Pow(GetFloat(args[0]), GetFloat(args[1])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(2, args.Count, name);
+                    }
+                    break;
+                }
+                case "rad":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)(args[0].GetFloatValue(this) * (Math.PI / 180)));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(1, args.Count, name);
+                    }
+                    break;
+                }
+                case "round":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Round(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "sin":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Sin(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "sqrt":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Sqrt(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "tan":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Tan(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
+                case "tanh":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Tanh(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
                     }
                     break;
                 }
             }
             return ScriptVar.Null;
+        }
+
+        private float GetFloat(ScriptVar var)
+        {
+            return var.GetFloatValue(this);
+        }
+
+        private int GetInt(ScriptVar var)
+        {
+            return (int)var.GetFloatValue(this);
+        }
+
+        private string GetString(ScriptVar var)
+        {
+            return var.GetStringValue(this);
+        }
+
+        private bool GetBool(ScriptVar var)
+        {
+            return var.GetBoolValue(this);
+        }
+
+        private IScriptContext GetContext(ScriptVar var)
+        {
+            return var.GetContextValue(this);
+        }
+
+        private void InvalidArgCountError(int expected, int received, string method)
+        {
+            Error(ScriptError.InvalidArgCount(expected, received, GetType(), method));
         }
 
         public SandboxScriptRuntime(int stackSize, int localSize, MainWindow window)
@@ -449,7 +834,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
             _stackSize = stackSize;
             _localSize = localSize;
             _invokeCache = new List<ScriptVar>();
-            _localIndexes = new HashSet<int>();
+            _stopwatch = new Stopwatch();
             _window = window;
         }
     }

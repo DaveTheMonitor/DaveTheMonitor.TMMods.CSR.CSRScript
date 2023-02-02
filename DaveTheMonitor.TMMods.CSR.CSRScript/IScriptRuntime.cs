@@ -11,16 +11,16 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         /// <summary>
         /// Causes a runtime error.
         /// </summary>
-        /// <param name="header">The header of the error.</param>
-        /// <param name="message">The message of the error.</param>
-        void Error(string header, string message);
+        /// <param name="error">The error that occurred.</param>
+        void Error(ScriptError error);
 
         /// <summary>
         /// Runs a script.
         /// </summary>
         /// <param name="script">The script to run.</param>
         /// <param name="init">The action called when the script is initialized. This is used to pass in vars to the script, such as contexts (eg. world).</param>
-        void Run(Script script, Action<IScriptRuntime> init);
+        /// <param name="timeout">The time, in milliseconds, before execution forcefully stops.</param>
+        void Run(Script script, Action<IScriptRuntime> init, int timeout);
 
         /// <summary>
         /// Sets an in variable. Should only be called on script initialization.

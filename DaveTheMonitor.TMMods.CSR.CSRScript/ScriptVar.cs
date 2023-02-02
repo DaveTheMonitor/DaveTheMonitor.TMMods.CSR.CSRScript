@@ -109,7 +109,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         {
             if (!IsFloat)
             {
-                runtime?.Error("Invalid Variable Type", "Variable is " + Type + ", expected Float");
+                runtime?.Error(ScriptError.InvalidTypeError(ScriptVarType.Float, Type));
                 return 0;
             }
             return _float;
@@ -126,7 +126,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         {
             if (!IsBool)
             {
-                runtime?.Error("Invalid Variable Type", "Variable is " + Type + ", expected Bool");
+                runtime?.Error(ScriptError.InvalidTypeError(ScriptVarType.Bool, Type));
                 return false;
             }
             return _float > 0;
@@ -143,7 +143,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         {
             if (!IsString)
             {
-                runtime?.Error("Invalid Variable Type", "Variable is " + Type + ", expected String");
+                runtime?.Error(ScriptError.InvalidTypeError(ScriptVarType.String, Type));
                 return null;
             }
             return _string;
@@ -160,7 +160,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         {
             if (!IsContext)
             {
-                runtime?.Error("Invalid Variable Type", "Variable is " + Type + ", expected Context");
+                runtime?.Error(ScriptError.InvalidTypeError(ScriptVarType.Context, Type));
                 return null;
             }
             return _context;
@@ -177,12 +177,12 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
 
             if (!leftIsValid)
             {
-                runtime?.Error("Invalid Operation Types", left.Type + " values cannot be operated on.");
+                runtime?.Error(ScriptError.InvalidOperaionTypeError(left.Type));
                 return false;
             }
             else if (!rightIsValid)
             {
-                runtime?.Error("Invalid Operation Types", right.Type + " values cannot be operated on.");
+                runtime?.Error(ScriptError.InvalidOperaionTypeError(right.Type));
                 return false;
             }
 
@@ -205,12 +205,12 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
 
             if (!leftIsValid)
             {
-                runtime?.Error("Invalid Operation Types", left.Type + " values cannot be operated on.");
+                runtime?.Error(ScriptError.InvalidOperaionTypeError(left.Type));
                 return false;
             }
             else if (!rightIsValid)
             {
-                runtime?.Error("Invalid Operation Types", right.Type + " values cannot be operated on.");
+                runtime?.Error(ScriptError.InvalidOperaionTypeError(right.Type));
                 return false;
             }
 
@@ -349,7 +349,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         {
             if (IsNull || IsString || IsContext || value.IsNull || value.IsString || value.IsContext)
             {
-                runtime?.Error("Invalid Operation Types", Type + " values cannot be operated on.");
+                runtime?.Error(new ScriptError("Invalid Comparison Types", $"{Type} cannot be compared."));
                 return -2;
             }
             else

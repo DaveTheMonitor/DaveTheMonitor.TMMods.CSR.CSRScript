@@ -14,7 +14,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
             }
             else
             {
-                runtime?.Error("Invalid Variable Type", "Variable is " + context.GetType().Name + ", expected " + typeof(T).Name);
+                runtime?.Error(ScriptError.InvalidTypeError(typeof(T), context.GetType()));
                 value = default(T);
                 return false;
             }

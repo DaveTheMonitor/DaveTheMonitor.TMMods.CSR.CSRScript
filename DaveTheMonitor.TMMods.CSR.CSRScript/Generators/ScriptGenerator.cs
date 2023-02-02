@@ -236,14 +236,14 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators
         /// Converts the operations of a script to human-readable text.
         /// </summary>
         /// <param name="script">The script to convert.</param>
-        /// <param name="includeLines">If true, line numbers will be included in the output.</param>
+        /// <param name="includeIndexes">If true, op indexes will be included in the output.</param>
         /// <returns>A string representing the operations of this script.</returns>
-        public static string ConvertOps(Script script, bool includeLines)
+        public static string ConvertOps(Script script, bool includeIndexes)
         {
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < script.Ops.Length; i++)
             {
-                if (includeLines)
+                if (includeIndexes)
                 {
                     builder.AppendLine(i.ToString("0000") + " | " + script.Ops[i].ToString());
                 }

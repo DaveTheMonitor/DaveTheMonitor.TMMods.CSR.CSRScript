@@ -17,7 +17,7 @@
 
         public override string ToString()
         {
-            return $"{Op} : {_name}, {_args}";
+            return $"{Op} {_name} {_args}";
         }
 
         public ScriptOpInvoke(ScriptOpCode op, string name, int args) : base(op)

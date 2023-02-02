@@ -8,7 +8,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
     public interface IScriptContext
     {
         /// <summary>
-        /// Returns a property with the specified <paramref name="name"/> as a <see cref="ScriptVar"/>.
+        /// Returns a <see cref="ScriptVar"/> with the value of the property with the specified <paramref name="name"/>.
         /// </summary>
         /// <param name="runtime">The <see cref="IScriptRuntime"/> executing the <see cref="Script"/> calling this method.</param>
         /// <param name="name">The name of the property to get.</param>

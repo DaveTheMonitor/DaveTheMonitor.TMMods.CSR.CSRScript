@@ -82,7 +82,7 @@ namespace DaveTheMonitor.CSRSandbox
                     _opOutput.Text = ScriptGenerator.ConvertOps(script, true);
 
                     SandboxWorld world = new SandboxWorld(this);
-                    _runtime.Run(script, (r) => r.InitVar("world", new ScriptVar(world)));
+                    _runtime.Run(script, (r) => r.InitVar("world", new ScriptVar(world)), 1000);
                 }
             }
             catch(Exception ex)

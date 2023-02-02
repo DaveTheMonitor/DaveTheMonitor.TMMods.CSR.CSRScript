@@ -11,7 +11,7 @@
 
         public override string ToString()
         {
-            return $"{Op} : \"{_value}\"";
+            return $"{Op} \"{_value}\"";
         }
 
         public ScriptOpString(ScriptOpCode op, string value) : base(op)

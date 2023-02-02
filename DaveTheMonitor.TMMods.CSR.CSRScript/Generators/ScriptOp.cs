@@ -14,7 +14,7 @@
         /// Gets the argument at the specified index. For <see cref="ScriptOpCode"/>s with no string args, this always returns null.
         /// </summary>
         /// <param name="index">The index of the argument to get.</param>
-        /// <returns>The specified argument.</returns>
+        /// <returns>The argument at the specified index.</returns>
         public virtual string GetArgString(int index)
         {
             return null;
@@ -24,7 +24,7 @@
         /// Gets the argument at the specified index. For <see cref="ScriptOpCode"/>s with no float args, this always returns 0.
         /// </summary>
         /// <param name="index">The index of the argument to get.</param>
-        /// <returns>The specified argument.</returns>
+        /// <returns>The argument at the specified index.</returns>
         public virtual float GetArgFloat(int index)
         {
             return 0;
@@ -34,7 +34,7 @@
         /// Gets the argument at the specified index. For <see cref="ScriptOpCode"/>s with no int args, this always returns 0.
         /// </summary>
         /// <param name="index">The index of the argument to get.</param>
-        /// <returns>The specified argument.</returns>
+        /// <returns>The argument at the specified index.</returns>
         public virtual int GetArgInt(int index)
         {
             return 0;
@@ -44,7 +44,7 @@
         /// Gets the argument at the specified index. For <see cref="ScriptOpCode"/>s with no bool args, this always returns false.
         /// </summary>
         /// <param name="index">The index of the argument to get.</param>
-        /// <returns>The specified argument.</returns>
+        /// <returns>The argument at the specified index.</returns>
         public virtual bool GetArgBool(int index)
         {
             return false;
@@ -59,7 +59,7 @@
         /// <summary>
         /// Creates a new ScriptOp with the specified <see cref="ScriptOpCode"/>.
         /// </summary>
-        /// <param name="op">The operation this ScriptOp specifies.</param>
+        /// <param name="op">The operation this ScriptOp performs.</param>
         /// <remarks>
         /// <para>This should only be used with <see cref="ScriptOpCode"/>s with no additional parameters, ie. <see cref="ScriptOpCode.Nop"/>, <see cref="ScriptOpCode.Null"/> or <see cref="ScriptOpCode.Pop"/>.</para>
         /// </remarks>

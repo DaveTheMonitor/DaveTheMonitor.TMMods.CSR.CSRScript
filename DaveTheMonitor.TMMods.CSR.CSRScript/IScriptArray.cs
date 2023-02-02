@@ -3,7 +3,7 @@
 namespace DaveTheMonitor.TMMods.CSR.CSRScript
 {
     /// <summary>
-    /// A <see cref="IScriptContext"/> that gives scripts access to an <see cref="IList{T}"/>.
+    /// An <see cref="IScriptContext"/> that gives scripts access to an <see cref="IList{T}"/>.
     /// </summary>
     public interface IScriptArray : IScriptContext
     {

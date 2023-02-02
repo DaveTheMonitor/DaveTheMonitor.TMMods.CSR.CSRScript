@@ -21,6 +21,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
                 case "length": return new ScriptVar(Count);
                 case "readonly": return new ScriptVar(ReadOnly);
             }
+            runtime.Error(ScriptError.InvalidPropertyError(GetType(), name));
             return ScriptVar.Null;
         }
 
@@ -76,6 +77,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
                     return Contains(args[0], runtime);
                 }
             }
+            runtime.Error(ScriptError.InvalidMethodError(GetType(), name));
             return ScriptVar.Null;
         }
 
@@ -85,7 +87,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
 
         public void SetProperty(IScriptRuntime runtime, string name, ScriptVar value)
         {
-            runtime?.Error("Cannot set property of Array", "Arrays cannot set properties.");
+            runtime?.Error(new ScriptError("Cannot Set Property of Array", "Arrays cannot set properties."));
         }
 
         public ScriptVar GetItem(int index, IScriptRuntime runtime)
@@ -204,12 +206,12 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
 
         private void ReadOnlyError(IScriptRuntime runtime)
         {
-            runtime?.Error("Cannot modify Array", "Cannot modify Array; Array is read-only.");
+            runtime?.Error(new ScriptError("Cannot Modify Array", "Cannot modify Array; Array is read-only."));
         }
 
         private void IndexError(IScriptRuntime runtime)
         {
-            runtime.Error("Cannot access Array index", "Cannot access Array index; index is out of range.");
+            runtime.Error(new ScriptError("Cannot Index Array", "Cannot index Array; index is out of range."));
         }
 
         public ScriptArrayInternal(IList<T> list, bool readOnly)

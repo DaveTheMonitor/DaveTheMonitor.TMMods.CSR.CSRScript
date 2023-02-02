@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -55,65 +56,79 @@ namespace DaveTheMonitor.CSRSandbox
             return ScriptVar.Null;
         }
 
-        public ScriptVar Invoke(IScriptRuntime runtime, string name, IList<ScriptVar> args)
+        public ScriptVar Invoke(IScriptRuntime r, string name, IList<ScriptVar> args)
         {
             switch (name)
             {
                 case "getgroundheight":
                 {
-                    int argCount = 2;
-                    if (args.Count != argCount)
+                    if (args.Count == 2)
                     {
-                        runtime.Error("Invalid arguments", "Invoke expected " + argCount + " arguments, received " + args.Count);
-                        break;
+                        return new ScriptVar(GroundLevel((int)args[0].GetFloatValue(r), (int)args[1].GetFloatValue(r)));
                     }
-                    return new ScriptVar(GroundLevel((int)args[0].GetFloatValue(runtime), (int)args[1].GetFloatValue(runtime)));
+                    else
+                    {
+                        InvalidArgCountError(r, 2, args.Count, name);
+                    }
+                    break;
+                    
                 }
                 case "getsealevel":
                 {
-                    int argCount = 0;
-                    if (args.Count != argCount)
+                    if (args.Count == 0)
                     {
-                        runtime.Error("Invalid arguments", "Invoke expected " + argCount + " arguments, received " + args.Count);
-                        break;
+                        return new ScriptVar(200);
                     }
-                    return new ScriptVar(200);
+                    else
+                    {
+                        InvalidArgCountError(r, 0, args.Count, name);
+                    }
+                    break;
                 }
                 case "getblock":
                 {
-                    int argCount = 3;
-                    if (args.Count != argCount)
+                    if (args.Count == 3)
                     {
-                        runtime.Error("Invalid arguments", "Invoke expected " + argCount + " arguments, received " + args.Count);
-                        break;
+                        return new ScriptVar(GetBlock((int)args[0].GetFloatValue(r), (int)args[1].GetFloatValue(r), (int)args[2].GetFloatValue(r)));
                     }
-                    return new ScriptVar(GetBlock((int)args[0].GetFloatValue(runtime), (int)args[1].GetFloatValue(runtime), (int)args[2].GetFloatValue(runtime)));
+                    else
+                    {
+                        InvalidArgCountError(r, 3, args.Count, name);
+                    }
+                    break;
                 }
                 case "setblock":
                 {
-                    int argCount = 4;
-                    if (args.Count != argCount)
+                    if (args.Count == 4)
                     {
-                        runtime.Error("Invalid arguments", "Invoke expected " + argCount + " arguments, received " + args.Count);
-                        break;
+                        SetBlock((int)args[0].GetFloatValue(r), (int)args[1].GetFloatValue(r), (int)args[2].GetFloatValue(r), args[3].GetStringValue(r));
                     }
-                    SetBlock((int)args[0].GetFloatValue(runtime), (int)args[1].GetFloatValue(runtime), (int)args[2].GetFloatValue(runtime), args[3].GetStringValue(runtime));
+                    else
+                    {
+                        InvalidArgCountError(r, 4, args.Count, name);
+                    }
                     break;
                 }
                 case "notify":
                 {
-                    int argCount = 1;
-                    if (args.Count != argCount)
+                    if (args.Count == 1)
                     {
-                        runtime.Error("Invalid arguments", "Invoke expected " + argCount + " arguments, received " + args.Count);
-                        break;
+                        _window.Log(args[0].GetStringValue(r));
                     }
-                    _window.Log(args[0].GetStringValue(runtime));
+                    else
+                    {
+                        InvalidArgCountError(r, 1, args.Count, name);
+                    }
                     break;
                 }
             }
-
+            r.Error(ScriptError.InvalidMethodError(GetType(), name));
             return ScriptVar.Null;
+        }
+
+        private void InvalidArgCountError(IScriptRuntime runtime, int expected, int received, string method)
+        {
+            runtime.Error(ScriptError.InvalidArgCountError(expected, received));
         }
 
         public void SetProperty(IScriptRuntime runtime, string name, ScriptVar value)
