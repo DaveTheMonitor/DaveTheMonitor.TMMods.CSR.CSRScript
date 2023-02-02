@@ -261,6 +261,12 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators.Compiler
                             _generator.InsertOp(ScriptOpCode.Context);
                             break;
                         }
+                        case "wait":
+                        {
+                            CompileNode(n.Args[0]);
+                            _generator.InsertOp(ScriptOpCode.Wait);
+                            break;
+                        }
                     }
                     break;
                 }

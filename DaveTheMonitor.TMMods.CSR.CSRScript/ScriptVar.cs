@@ -75,7 +75,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
         public void SetValue(bool value)
         {
             _float = value ? 1 : 0;
-            Type = ScriptVarType.Float;
+            Type = ScriptVarType.Bool;
         }
 
         /// <summary>

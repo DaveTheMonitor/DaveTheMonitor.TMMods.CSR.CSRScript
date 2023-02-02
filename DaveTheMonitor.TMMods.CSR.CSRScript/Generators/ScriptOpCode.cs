@@ -174,6 +174,10 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators
         /// <summary>
         /// Gets a property of the current context and pushes the value on to the stack. Calls <see cref="IScriptContext.GetProperty(IScriptRuntime, string)"/>
         /// </summary>
-        GetProperty
+        GetProperty,
+        /// <summary>
+        /// Waits for a specified amount of time.
+        /// </summary>
+        Wait
     }
 }

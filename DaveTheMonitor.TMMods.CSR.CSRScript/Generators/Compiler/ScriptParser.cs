@@ -45,11 +45,15 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators.Compiler
                 {
                     break;
                 }
-                if (token.Is(ScriptTokenType.LB))
+                if (token.Is(ScriptTokenType.End) && inBracket)
+                {
+                    Error("Invalid Token", "Line end in token", bracketPos);
+                }
+                else if (token.Is(ScriptTokenType.LB))
                 {
                     if (inBracket)
                     {
-                        Error("Token never closed", "Attempted to open a token without closing previous token", bracketPos);
+                        Error("Invalid Token", "Attempted to open a token without closing previous token", bracketPos);
                     }
                     else
                     {
@@ -61,7 +65,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators.Compiler
                 {
                     if (!inBracket)
                     {
-                        Error("Token never closed", "Attempted to close a token without opening a token", token.Position);
+                        Error("Invalid Token", "Attempted to close a token without opening a token", token.Position);
                     }
                     else
                     {
@@ -111,6 +115,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators.Compiler
                         }
                         case "context":
                         case "print":
+                        case "wait":
                         {
                             AddCommand(token, 1);
                             break;

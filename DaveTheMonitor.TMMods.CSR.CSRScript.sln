@@ -5,7 +5,7 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaveTheMonitor.TMMods.CSR.CSRScript", "DaveTheMonitor.TMMods.CSR.CSRScript\DaveTheMonitor.TMMods.CSR.CSRScript.csproj", "{370AA7AA-1B77-45D2-92E4-8C98E4123283}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaveTheMonitor.CSRSandbox", "DaveTheMonitor.CSRSandbox\DaveTheMonitor.CSRSandbox.csproj", "{D6E90544-05EC-4A01-8684-ABB7CCAB57D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DaveTheMonitor.CSRSandbox", "DaveTheMonitor.CSRSandbox\DaveTheMonitor.CSRSandbox.csproj", "{D6E90544-05EC-4A01-8684-ABB7CCAB57D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

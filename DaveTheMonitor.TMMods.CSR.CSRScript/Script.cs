@@ -9,19 +9,19 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
     public sealed class Script
     {
         /// <summary>
-        /// True if this script was compiled. False if this script was generated.
-        /// </summary>
-        public bool Compiled { get; private set; }
-        /// <summary>
         /// The name of this script.
         /// </summary>
         public string Name { get; private set; }
         /// <summary>
-        /// A read-only collection of operations of this script.
+        /// True if this script was compiled. False if this script was generated or modified.
+        /// </summary>
+        public bool Compiled { get; private set; }
+        /// <summary>
+        /// A collection of operations of this script. It's best to not modify this. If you need to change the behavior of a script, use a <see cref="ScriptGenerator"/>.
         /// </summary>
         public ScriptOp[] Ops { get; private set; }
         /// <summary>
-        /// A dictionary that maps input variable names to local in vars, eg. world.
+        /// A dictionary that maps input variable names to local indexes, eg. world.
         /// </summary>
         public Dictionary<string, int> InVars { get; internal set; }
 

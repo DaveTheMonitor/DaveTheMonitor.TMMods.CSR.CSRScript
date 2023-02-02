@@ -250,7 +250,8 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators.Compiler
                 "print",
                 "continue",
                 "break",
-                "delete"
+                "delete",
+                "wait"
             };
             _tokens = new List<ScriptToken>();
         }

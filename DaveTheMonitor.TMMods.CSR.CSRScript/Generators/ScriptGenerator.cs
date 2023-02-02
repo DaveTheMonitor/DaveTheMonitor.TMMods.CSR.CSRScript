@@ -27,7 +27,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators
         /// <summary>
         /// Saves any changes made to the script. Should be called when the script is complete.
         /// </summary>
-        /// <param name="inVars">A dictionary containing the input variable indexes for variable names. Required for scripts to be properly initialized.</param>
+        /// <param name="inVars">A dictionary containing the input variable indexes for IDs. Required for scripts to be properly initialized. If null, input variables will remain unchanged.</param>
         public void FinalizeScript(Dictionary<string, int> inVars)
         {
             FinalizeScript(inVars, false);
@@ -36,7 +36,10 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators
         internal void FinalizeScript(Dictionary<string, int> inVars, bool compiled)
         {
             Script.SetOps(Ops.ToArray(), compiled);
-            Script.InVars = inVars;
+            if (inVars != null)
+            {
+                Script.InVars = inVars;
+            }
         }
 
         /// <summary>
@@ -179,6 +182,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript.Generators
                 case ScriptOpCode.Lte:
                 case ScriptOpCode.Context:
                 case ScriptOpCode.PushContext:
+                case ScriptOpCode.Wait:
                 {
                     InsertOp(new ScriptOp(op));
                     break;

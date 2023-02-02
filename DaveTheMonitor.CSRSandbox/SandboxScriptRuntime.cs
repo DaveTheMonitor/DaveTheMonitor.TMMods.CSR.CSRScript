@@ -3,6 +3,7 @@ using DaveTheMonitor.TMMods.CSR.CSRScript.Generators;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 
 namespace DaveTheMonitor.TMMods.CSR.CSRScript
 {
@@ -357,6 +358,13 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
                         Push(_context.GetProperty(this, name));
                         break;
                     }
+                    case ScriptOpCode.Wait:
+                    {
+                        int time = GetInt(_stack.Pop());
+                        timeout += time;
+                        Thread.Sleep(time);
+                        break;
+                    }
                     default:
                     {
                         Error(ScriptError.UndefinedOperation());
@@ -366,7 +374,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
                 _position++;
             }
             _stopwatch.Stop();
-            _window.Log("Script execution finished in " + _stopwatch.ElapsedMilliseconds + " ms");
+            _window.Log($"Script execution finished in {_stopwatch.ElapsedMilliseconds} ms ({_stopwatch.ElapsedTicks / (decimal)Stopwatch.Frequency} s)");
             Exit();
         }
 
@@ -757,6 +765,18 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
                     }
                     break;
                 }
+                case "sinh":
+                {
+                    if (args.Count == 1)
+                    {
+                        return new ScriptVar((float)Math.Sinh(GetFloat(args[0])));
+                    }
+                    else
+                    {
+                        InvalidArgCountError(args.Count, args.Count, name);
+                    }
+                    break;
+                }
                 case "sqrt":
                 {
                     if (args.Count == 1)
@@ -794,6 +814,7 @@ namespace DaveTheMonitor.TMMods.CSR.CSRScript
                     break;
                 }
             }
+            Error(ScriptError.InvalidMethodError(GetType(), name));
             return ScriptVar.Null;
         }
 

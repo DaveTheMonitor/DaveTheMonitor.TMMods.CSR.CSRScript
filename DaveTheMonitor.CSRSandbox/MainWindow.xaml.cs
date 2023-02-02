@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,6 +32,9 @@ namespace DaveTheMonitor.CSRSandbox
         private List<string> _output;
         private Stopwatch _compileTimer;
         private SandboxScriptRuntime _runtime;
+        private Thread _scriptThread;
+        private bool _scriptRunning;
+        private Script _script;
 
         public MainWindow()
         {
@@ -43,6 +47,8 @@ namespace DaveTheMonitor.CSRSandbox
             _output = new List<string>();
             _compileTimer = new Stopwatch();
             _runtime = new SandboxScriptRuntime(128, 128, this);
+            _scriptThread = new Thread(StartScript);
+            _scriptRunning = false;
         }
 
         private void _codeInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -81,8 +87,10 @@ namespace DaveTheMonitor.CSRSandbox
                     Log("Script compiled successfully in " + _compileTimer.ElapsedMilliseconds + " ms");
                     _opOutput.Text = ScriptGenerator.ConvertOps(script, true);
 
-                    SandboxWorld world = new SandboxWorld(this);
-                    _runtime.Run(script, (r) => r.InitVar("world", new ScriptVar(world)), 1000);
+                    _script = script;
+                    _scriptRunning = true;
+                    _compileButton.IsEnabled = false;
+                    Task.Run(StartScript);
                 }
             }
             catch(Exception ex)
@@ -91,10 +99,17 @@ namespace DaveTheMonitor.CSRSandbox
             }
         }
 
+        private void StartScript()
+        {
+            SandboxWorld world = new SandboxWorld(this);
+            _runtime.Run(_script, (r) => r.InitVar("world", new ScriptVar(world)), 5000);
+            _scriptRunning = false;
+            Dispatcher.Invoke(() => _compileButton.IsEnabled = true);
+        }
+
         internal void Log(string message)
         {
-            _output.Add(message);
-            _outputBox.Text += message + "\n";
+            Dispatcher.Invoke(() => LogPrivate(message));
         }
 
         private void ClearOutput()
@@ -106,6 +121,12 @@ namespace DaveTheMonitor.CSRSandbox
         internal void LogError(string header, string message)
         {
             Log(header + ":\n    " + message);
+        }
+
+        private void LogPrivate(string message)
+        {
+            _output.Add(message);
+            _outputBox.Text += message + "\n";
         }
 
         private void _compileButton_Click(object sender, RoutedEventArgs e)

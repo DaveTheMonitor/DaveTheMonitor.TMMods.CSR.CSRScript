@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DaveTheMonitor.CSRSandbox
@@ -126,7 +127,7 @@ namespace DaveTheMonitor.CSRSandbox
             return ScriptVar.Null;
         }
 
-        private void InvalidArgCountError(IScriptRuntime runtime, int expected, int received, string method)
+        private static void InvalidArgCountError(IScriptRuntime runtime, int expected, int received, string method)
         {
             runtime.Error(ScriptError.InvalidArgCountError(expected, received));
         }
